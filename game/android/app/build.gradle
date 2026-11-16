@@ -4,7 +4,7 @@ android {
     namespace "pro.areu.rich4"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "pro.areu.rich4"
+        applicationId "io.github.xiangyuchiu.rich4online"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 52

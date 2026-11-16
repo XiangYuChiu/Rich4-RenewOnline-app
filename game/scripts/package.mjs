@@ -21,26 +21,34 @@ const out = join(root, 'release');
 const version = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version;
 mkdirSync(out, { recursive: true });
 
+const win = process.platform === 'win32';
+// Windows (rich4-online fork): npx and gradlew.bat are batch files, which only run through the shell.
 const run = (cmd, args, opts = {}) => {
-  const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: root, ...opts });
+  const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: root, shell: win, ...opts });
   if (r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} failed (${r.status})`);
 };
 
 if (!argv.includes('--no-build')) {
   run('npx', ['tsc', '--noEmit']);
   run('npx', ['vite', 'build'], { env: { ...process.env, RICH4_NO_ASSETS: '1' } });
-  run('node', ['scripts/bundle-assets.mjs'], { env: { ...process.env, RICH4_WEBP: '1' } });
+  // WebP re-encoding needs cwebp (rich4-online fork: only when it is installed; else the art is copied as it is and
+  // the package is bigger).
+  const webp = spawnSync('cwebp', ['-version'], { shell: win }).status === 0;
+  if (!webp) console.log('cwebp not found: art copied without WebP re-encoding (a bigger package)');
+  run('node', ['scripts/bundle-assets.mjs'], { env: { ...process.env, ...(webp ? { RICH4_WEBP: '1' } : {}) } });
 }
 
 if (targets.includes('apk')) {
   const env = { ...process.env };
-  const studioJdk = '/Applications/Android Studio.app/Contents/jbr/Contents/Home';
+  // Android Studio's own JDK and the SDK's default place: macOS, and (rich4-online fork) Windows.
+  const studioJdk = win ? 'C:/Program Files/Android/Android Studio/jbr' : '/Applications/Android Studio.app/Contents/jbr/Contents/Home';
   if (!env.JAVA_HOME && existsSync(studioJdk)) env.JAVA_HOME = studioJdk;
-  const sdk = env.ANDROID_HOME ?? env.ANDROID_SDK_ROOT ?? join(homedir(), 'Library/Android/sdk');
+  const sdk = env.ANDROID_HOME ?? env.ANDROID_SDK_ROOT ?? (win ? join(env.LOCALAPPDATA ?? join(homedir(), 'AppData/Local'), 'Android/Sdk') : join(homedir(), 'Library/Android/sdk'));
   const local = join(root, 'android/local.properties');
-  if (!existsSync(local) && existsSync(sdk)) writeFileSync(local, `sdk.dir=${sdk}\n`);
+  // local.properties wants forward slashes (a Windows path's backslashes are escapes there).
+  if (!existsSync(local) && existsSync(sdk)) writeFileSync(local, `sdk.dir=${sdk.replace(/\\/g, '/')}\n`);
   run('npx', ['cap', 'sync', 'android']);
-  run('./gradlew', ['assembleDebug', '-q'], { cwd: join(root, 'android'), env });
+  run(win ? 'gradlew.bat' : './gradlew', ['assembleDebug', '-q'], { cwd: join(root, 'android'), env });
   const apk = join(out, `rich4-${version}.apk`);
   cpSync(join(root, 'android/app/build/outputs/apk/debug/app-debug.apk'), apk);
   console.log(`APK → ${apk}`);

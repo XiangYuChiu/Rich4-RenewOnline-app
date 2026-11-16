@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">大富翁4</string>
-    <string name="title_activity_main">大富翁4</string>
-    <string name="package_name">pro.areu.rich4</string>
-    <string name="custom_url_scheme">pro.areu.rich4</string>
+    <string name="app_name">大富翁4連線版</string>
+    <string name="title_activity_main">大富翁4連線版</string>
+    <string name="package_name">io.github.xiangyuchiu.rich4online</string>
+    <string name="custom_url_scheme">io.github.xiangyuchiu.rich4online</string>
 </resources>

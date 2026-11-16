@@ -10,7 +10,9 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: t
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 // Test runs keep their own profile (RICH4_USER_DATA=<dir>): the player's saves in the app's real profile stay untouched.
-if (process.env.RICH4_USER_DATA) app.setPath('userData', process.env.RICH4_USER_DATA);
+// rich4-online fork: always its own profile folder (%APPDATA%\rich4-online), never the original game's 大富翁4 — that
+// one's saves, and the original's downloaded updates in rich4-update (which would load over this fork's code), stay apart.
+app.setPath('userData', process.env.RICH4_USER_DATA || join(app.getPath('appData'), 'rich4-online'));
 const DIST = process.env.RICH4_DIST || (app.isPackaged ? join(process.resourcesPath, 'dist') : join(__dirname, '..', 'dist'));
 
 // 在線更新 (docs/rules/29, game/src/ui/update.ts): a newer version downloaded into <userData>/rich4-update/v<version>/
@@ -55,7 +57,7 @@ function createWindow() {
   const size = /^(\d+)x(\d+)$/.exec(process.env.RICH4_SIZE || '');
   const win = new BrowserWindow({
     width: size ? Number(size[1]) : 1280, height: size ? Number(size[2]) : 800, useContentSize: !!size,
-    minWidth: size ? 200 : 800, minHeight: size ? 200 : 500, backgroundColor: '#0b2427', title: '大富翁4',
+    minWidth: size ? 200 : 800, minHeight: size ? 200 : 500, backgroundColor: '#0b2427', title: '大富翁4連線版',
     autoHideMenuBar: true, webPreferences: { contextIsolation: true, sandbox: true, preload: join(__dirname, 'preload.cjs') },
   });
   win.loadURL('app://rich4/index.html');

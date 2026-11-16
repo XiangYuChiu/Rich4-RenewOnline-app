@@ -1,7 +1,7 @@
 # 大富翁4 跨網連線版：施作進度
 
-> 給下一次開啟 Claude Code 的自己：先讀完這份檔案再動手。
-> 最後更新：2026-11-16（第 4 站完成：不再連原作者任何伺服器；待使用者瀏覽器重測。下一步第 5 站 GAS 或第 6 站打包）
+> 給下一次開啟 Claude Code 的自己：先讀完這份檔案再動手。**在新電腦上請改依 `docs/online/HOME-SETUP.md` 從頭建置。**
+> 最後更新：2026-11-16（第 6 站：Windows 版已在公司電腦打包；**下一步：使用者回家依 HOME-SETUP.md 打包 Android APK，並做第 7 站跨網實測**）
 
 ### Firebase 專案（第 2 站產出）
 
@@ -70,10 +70,10 @@ npx tsc --noEmit
 | 1 | 讀懂原版網路層 | ✅ 程式碼閱讀完成（見第 4 節）；⏳ **原版跨網實測待使用者回家測** |
 | 2 | 建立 Firebase 專案 | ✅ 完成：專案 `rich4-online`、匿名登入、RTDB（asia-southeast1）、規則已發布；`scripts/firebase-smoke.mjs` 10 項全過，往返 153 ms |
 | 3 | 實作 `firebase-peer.ts` | ✅ 完成：即時測試 5/5；使用者以 Chrome＋Edge 實測可開房、加入、擲骰（2026-11-16） |
-| 4 | 切斷對原作者伺服器的依賴 | ✅ 程式完成、測試全過（見第 5.2 節）；⏳ 待使用者在瀏覽器重新實測（房間前綴已換） |
-| 5 | GAS 後勤 | ⬜ |
-| 6 | 打包 Windows / Android | ⬜（要先改 App ID，見第 5.2 節） |
-| 7 | 跨網實測 | ⬜ |
+| 4 | 切斷對原作者伺服器的依賴 | ✅ 完成：使用者已在瀏覽器重測連線正常 |
+| 5 | GAS 後勤 | ⬜（不影響遊玩，之後再做） |
+| 6 | 打包 Windows / Android | ⏳ App ID 已改、Windows 版已打包（見第 5.3 節）；**Android APK 待使用者在家用電腦打包（HOME-SETUP.md 第 8 節）** |
+| 7 | 跨網實測 | ⬜ 待 APK 完成後，依 HOME-SETUP.md 第 9 節 |
 
 ### 待使用者回報：原版跨網實測
 
@@ -217,6 +217,25 @@ npm test   # 639 過；偶爾出現 vitest「Timeout calling onTaskUpdate」是�
 `import.meta.env` 要直接寫 `import.meta.env.X`（`tsconfig` 已載入 `vite/client` 型別）；寫成 `(import.meta as …).env` 時 Vitest 的 `vi.stubEnv` 不會生效。
 
 **剩下指向作者的地方（第 6 站處理）**：App ID 仍是 `pro.areu.rich4`（`capacitor.config.json`、`desktop/electron-builder.config.cjs`、`android/app/build.gradle`）。不改的話，手機上已裝官方版時無法安裝本 Fork（簽章不同），桌面版也可能共用同一個存檔位置。
+
+## 5.3 第 6 站實作紀錄
+
+**App 身分**（讓本 Fork 能和官方版同時安裝、資料互不干擾）：
+
+| 項目 | 原版 | 本 Fork | 檔案 |
+|---|---|---|---|
+| App ID | `pro.areu.rich4` | `io.github.xiangyuchiu.rich4online` | `capacitor.config.json`、`android/app/build.gradle`（`applicationId`；Java `namespace` 不動）、`android/.../strings.xml`、`desktop/electron-builder.config.cjs` |
+| 名稱 | 大富翁4 | 大富翁4連線版 | 同上、`desktop/main.cjs` 視窗標題 |
+| Windows 執行檔 | `Rich4.exe` | `Rich4Online.exe` | `electron-builder.config.cjs` |
+| 桌面版資料夾 | `%APPDATA%\大富翁4` | `%APPDATA%\rich4-online` | `desktop/main.cjs`（`app.setPath('userData', …)`） |
+
+桌面版資料夾**必須分開**：原版桌面殼會優先載入資料夾內 `rich4-update/` 的已下載更新；若和官方版共用，官方版下載的 v1.2.x 更新會蓋過本 Fork 的程式碼（本 Fork 版本號是 1.0.0），存檔也會混在一起。
+
+iOS 的 Bundle ID（`ios/App/App.xcodeproj`）沒改：沒有 Mac 無法打包 iOS，之後需要時再處理。
+
+**打包腳本 `scripts/package.mjs` 改為 Windows 可用**：`npx` / `gradlew.bat` 透過 shell 執行、自動找 Windows 上 Android Studio 的 JDK 與 SDK、`local.properties` 用正斜線；沒有 `cwebp` 時不做 WebP 壓縮（原版強制要求）。
+
+**Windows 版**（公司電腦，2026-11-16）：產出在 `D:\Persional\rich4-release`（repo 外），`win-unpacked\Rich4Online.exe`。建置的 JS 已確認含 Firebase 位址、不含 `areu.pro` / `flj.info`。完整步驟見 `HOME-SETUP.md` 第 7 節。
 
 ## 6. 注意事項
 

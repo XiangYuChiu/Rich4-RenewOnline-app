@@ -13,11 +13,13 @@
 | 2 | 建立 Firebase 專案（匿名登入、Realtime Database、安全規則） | ✅ |
 | 3 | 實作 Firebase 傳輸層 `firebase-peer.ts` | ✅ 瀏覽器實測可開房、加入、擲骰 |
 | 4 | 切斷對原作者伺服器的依賴（房間前綴、P2P 備援、遊戲內更新、回報） | ✅ 不再連線到原作者的任何伺服器 |
-| 5 | Google Apps Script 後勤（清理過期資料、戰績） | ⬜ |
-| 6 | 打包 Windows / Android | ⬜ |
+| 5 | Google Apps Script 後勤（清理過期資料、戰績） | ⬜ 不影響遊玩，之後再做 |
+| 6 | 打包 Windows / Android | ⏳ Windows 版完成；Android APK 待打包 |
 | 7 | 跨網實測 | ⬜ |
 
 詳細的施作紀錄、設計與踩過的坑：[`docs/online/PROGRESS.md`](docs/online/PROGRESS.md)
+
+在新電腦上從零建置、打包 Windows / Android、做跨網測試：[`docs/online/HOME-SETUP.md`](docs/online/HOME-SETUP.md)
 
 ## 運作方式
 
@@ -33,6 +35,8 @@
 
 ## 自行建置
 
+完整步驟（含 Windows 版與 Android APK 打包）見 [`docs/online/HOME-SETUP.md`](docs/online/HOME-SETUP.md)，摘要如下：
+
 1. 依下方「原專案說明 → 執行」安裝套件並取得素材。
 2. 建立自己的 Firebase 專案：啟用**匿名登入**、建立 **Realtime Database**，把 `game/database.rules.json` 貼到規則頁並發布。
 3. 在 `game/.env.local` 填入 Firebase 網頁應用程式設定（此檔不進 Git）：
@@ -44,6 +48,8 @@
    VITE_FB_APP_ID=...
    ```
 4. 驗證：`node scripts/firebase-smoke.mjs`（規則）、`FB_LIVE=1 npx vitest run src/ui/firebase-peer.live.test.ts`（傳輸層）。
+
+本 Fork 的 App ID 是 `io.github.xiangyuchiu.rich4online`（名稱「大富翁4連線版」），可以和官方版同時安裝，存檔與資料互不干擾。
 
 ## 授權與素材
 

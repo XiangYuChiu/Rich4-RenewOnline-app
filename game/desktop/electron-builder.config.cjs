@@ -7,9 +7,10 @@ const version = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), '
 // the file protocol there).
 module.exports = {
   ...(process.env.RICH4_ELECTRON ? { electronVersion: process.env.RICH4_ELECTRON } : {}),
-  appId: 'pro.areu.rich4',
-  productName: '大富翁4',
-  executableName: 'Rich4',
+  // rich4-online fork: its own id and name, so it installs and keeps its data beside the original game.
+  appId: 'io.github.xiangyuchiu.rich4online',
+  productName: '大富翁4連線版',
+  executableName: 'Rich4Online',
   copyright: 'Rich4 remake',
   extraMetadata: { version },
   directories: { output: process.env.RICH4_DESKTOP_OUT || join(__dirname, 'out'), buildResources: 'build' },

@@ -1,6 +1,6 @@
 {
-  "appId": "pro.areu.rich4",
-  "appName": "大富翁4",
+  "appId": "io.github.xiangyuchiu.rich4online",
+  "appName": "大富翁4連線版",
   "webDir": "dist",
   "ios": { "contentInset": "never", "backgroundColor": "#0b2427" }
 }
