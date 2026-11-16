@@ -129,6 +129,7 @@ npx electron-builder --config electron-builder.config.cjs --win zip --x64
 
 產出：`<RICH4_DESKTOP_OUT>\win-unpacked\Rich4Online.exe`（直接執行）與一個 zip（給朋友）。
 Windows 會跳出「Windows 已保護你的電腦」，點「其他資訊 → 仍要執行」（沒有程式碼簽章）。
+Windows 防火牆若詢問是否允許網路存取，**按「取消」即可**：遊戲只需要往外連 Firebase，不需要別人連進來。
 
 本 Fork 的桌面版資料放在 `%APPDATA%\rich4-online`，與原版 `大富翁4` 完全分開，可以和官方版同時安裝。
 

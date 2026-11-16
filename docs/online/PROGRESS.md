@@ -35,7 +35,7 @@
 | `origin` | https://github.com/XiangYuChiu/Rich4-RenewOnline-app.git（使用者的 Fork） |
 | `upstream` | https://github.com/iam567/rich4-renew-app.git（**push 已設為 DISABLED**） |
 | 素材 | `game/public/assets/`（1.4 GB，37,787 檔，已被 `.gitignore` 排除，**絕不提交**） |
-| 素材原始壓縮檔 | `D:\Persional\rich4-downloads\rich4-assets.tar`（SHA-256 `9cc407a5…80ed` 已驗證，可刪） |
+| 素材原始壓縮檔 | 公司電腦上已刪除（素材已解壓到 `game/public/assets`；SHA-256 `9cc407a5…80ed`） |
 | Node / npm | v24.22.2 / 11.19.1 |
 | 未安裝 | `gh`、Java（Firebase 模擬器需要 Java） |
 
@@ -235,7 +235,10 @@ iOS 的 Bundle ID（`ios/App/App.xcodeproj`）沒改：沒有 Mac 無法打包 i
 
 **打包腳本 `scripts/package.mjs` 改為 Windows 可用**：`npx` / `gradlew.bat` 透過 shell 執行、自動找 Windows 上 Android Studio 的 JDK 與 SDK、`local.properties` 用正斜線；沒有 `cwebp` 時不做 WebP 壓縮（原版強制要求）。
 
-**Windows 版**（公司電腦，2026-11-16）：產出在 `D:\Persional\rich4-release`（repo 外），`win-unpacked\Rich4Online.exe`。建置的 JS 已確認含 Firebase 位址、不含 `areu.pro` / `flj.info`。完整步驟見 `HOME-SETUP.md` 第 7 節。
+**Windows 版**（公司電腦，2026-11-16）：打包成功，`Rich4Online.exe` 確認能啟動；建置的 JS 已確認含 Firebase 位址、不含 `areu.pro` / `flj.info`。完整步驟見 `HOME-SETUP.md` 第 7 節。
+
+- 啟動時 Windows 防火牆會詢問是否允許網路存取：**按「取消」即可**。遊戲只需要往外連 Firebase（443 埠），不需要輸入連線。
+- 為避免公司 IT 疑慮，公司電腦上的打包產物已刪除。**之後打包好的 exe／APK 只在家用電腦執行**；公司電腦只寫程式、跑測試與開發伺服器。
 
 ## 6. 注意事項
 
