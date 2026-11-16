@@ -1,7 +1,7 @@
 # 大富翁4 跨網連線版：施作進度
 
 > 給下一次開啟 Claude Code 的自己：先讀完這份檔案再動手。
-> 最後更新：2026-11-16（第 3 站完成，派對模式已可經 Firebase 開房加入；下一步第 4 站。原版跨網實測仍待使用者回家測）
+> 最後更新：2026-11-16（第 4 站完成：不再連原作者任何伺服器；待使用者瀏覽器重測。下一步第 5 站 GAS 或第 6 站打包）
 
 ### Firebase 專案（第 2 站產出）
 
@@ -58,7 +58,7 @@
 
 ```bash
 npm run dev     # http://127.0.0.1:5173/ ，第一次載入要 20–30 秒
-npm test        # 目前 70 檔 / 639 測試全過（約 60 秒）
+npm test        # 目前 70 檔 / 640 測試全過（約 60 秒）
 npx tsc --noEmit
 ```
 
@@ -70,9 +70,9 @@ npx tsc --noEmit
 | 1 | 讀懂原版網路層 | ✅ 程式碼閱讀完成（見第 4 節）；⏳ **原版跨網實測待使用者回家測** |
 | 2 | 建立 Firebase 專案 | ✅ 完成：專案 `rich4-online`、匿名登入、RTDB（asia-southeast1）、規則已發布；`scripts/firebase-smoke.mjs` 10 項全過，往返 153 ms |
 | 3 | 實作 `firebase-peer.ts` | ✅ 完成：即時測試 5/5；使用者以 Chrome＋Edge 實測可開房、加入、擲骰（2026-11-16） |
-| 4 | 切斷對原作者伺服器的依賴 | ⏳ **進行中** |
+| 4 | 切斷對原作者伺服器的依賴 | ✅ 程式完成、測試全過（見第 5.2 節）；⏳ 待使用者在瀏覽器重新實測（房間前綴已換） |
 | 5 | GAS 後勤 | ⬜ |
-| 6 | 打包 Windows / Android | ⬜ |
+| 6 | 打包 Windows / Android | ⬜（要先改 App ID，見第 5.2 節） |
 | 7 | 跨網實測 | ⬜ |
 
 ### 待使用者回報：原版跨網實測
@@ -199,6 +199,24 @@ npm test   # 639 過；偶爾出現 vitest「Timeout calling onTaskUpdate」是�
 `npm run dev` 後，用 **Chrome 和 Edge 各開一個** http://127.0.0.1:5173/（或 Chrome 一般視窗＋無痕視窗，才會是兩個不同的匿名玩家）。
 派對模式 → 建立房間（私享）→ 另一個瀏覽器輸入房間碼加入 → 開始遊戲玩幾回合。
 同時可在 Firebase Console → Realtime Database → 資料 看到 `peers` 出現房間 ID。
+
+## 5.2 第 4 站實作紀錄
+
+| 依賴 | 處理 | 檔案 |
+|---|---|---|
+| 作者轉發伺服器、`relay.json` 清單 | `RELAYS = []`、不再讀作者 GitHub 的清單；`game/relay.json` 改為空清單 | `net-peer.ts`、`relay.json` |
+| 在線人數、錯誤／聊天回報 | 兩者都用轉發伺服器的位址，清單為空後自動不送（原本就會在沒位址時直接返回） | `party-presence.ts`、`party-report.ts`（未改） |
+| PeerJS 直連備援 | 新增 `firebaseOnly()`：有 Firebase 設定時不登記 PeerJS、不走直連；Firebase 連不上就是連不上 | `net-peer.ts` |
+| 作者的 STUN / TURN（`game.flj.info`，含帳密） | 從 `ICE_SERVERS` 移除，只留公用 STUN | `party-net.ts` |
+| 網路檢查 | Firebase 模式下不再問 PeerJS 與 STUN；連不上 Firebase 直接顯示「暫時無法聯機」 | `party-check.ts` |
+| 遊戲內更新 | 更新伺服器改為建置設定 `VITE_UPDATE_SERVER`，**預設空白＝停用**；下載頁改指向本 Fork 的 Releases | `update.ts` |
+| 房間 ID 前綴 | `rich4-party-v2-` → `rich4online-v1-`，與官方玩家的房間、大廳清單完全分開 | `party-net.ts` |
+
+測試調整：`party-check.test.ts` 改為斷言「沒有 TURN、沒有作者伺服器」；`update.test.ts` 以 `vi.stubEnv` 提供假的更新伺服器繼續測下載邏輯，並新增「沒設定時完全不詢問」的測試。
+
+`import.meta.env` 要直接寫 `import.meta.env.X`（`tsconfig` 已載入 `vite/client` 型別）；寫成 `(import.meta as …).env` 時 Vitest 的 `vi.stubEnv` 不會生效。
+
+**剩下指向作者的地方（第 6 站處理）**：App ID 仍是 `pro.areu.rich4`（`capacitor.config.json`、`desktop/electron-builder.config.cjs`、`android/app/build.gradle`）。不改的話，手機上已裝官方版時無法安裝本 Fork（簽章不同），桌面版也可能共用同一個存檔位置。
 
 ## 6. 注意事項
 

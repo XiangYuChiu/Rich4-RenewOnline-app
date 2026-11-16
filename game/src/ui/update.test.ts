@@ -1,6 +1,6 @@
 /** 在線更新 (update.ts): only the changed files are fetched, each checked by its hash; the new version is named last. */
 import { createHash } from 'node:crypto';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 32);
 const files = new Map<string, Uint8Array>();
@@ -36,7 +36,18 @@ function serve(latest: object, opts: { broken?: string } = {}) {
 }
 
 describe('在線更新', () => {
-  afterEach(() => { files.clear(); asked.length = 0; vi.unstubAllGlobals(); vi.resetModules(); });
+  // The fork has no update server unless the build names one (update.ts SERVER); these tests name a stand-in.
+  beforeEach(() => { vi.stubEnv('VITE_UPDATE_SERVER', 'https://updates.example/u'); });
+  afterEach(() => { files.clear(); asked.length = 0; vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.resetModules(); });
+
+  it('rich4-online fork: no update server set, nothing is asked and there is never an update', async () => {
+    vi.stubEnv('VITE_UPDATE_SERVER', '');
+    serve({ version: NEXT, shell: 1 });
+    const { checkUpdate, fetchLatest } = await import('./update');
+    expect(await fetchLatest()).toBeNull();
+    expect(await checkUpdate()).toEqual({ kind: 'none' });
+    expect(asked.some(u => /latest\.json|areu\.pro/.test(u))).toBe(false);
+  });
 
   it('versions compare by number', async () => {
     const { newer } = await import('./update');

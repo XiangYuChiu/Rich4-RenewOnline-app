@@ -11,7 +11,7 @@
  */
 import Peer from 'peerjs';
 import { ICE_SERVERS } from './party-net';
-import { relayReachable } from './net-peer';
+import { firebaseOnly, relayReachable } from './net-peer';
 
 export type NetCheck =
   | { ok: true; note?: string }
@@ -58,9 +58,17 @@ export async function checkNetwork(): Promise<NetCheck> {
   if (typeof navigator !== 'undefined' && navigator.onLine === false)
     return { ok: false, title: '沒有網路', text: '這支手機目前沒有連上網路，\n無法進行多人對戰。\n請開啟 Wi-Fi 或行動數據後再試一次。', retry: true };
   // The VPS relay (net-peer.ts, the user 2026-11-03) answering is enough: everything goes through it.
-  const rtc = typeof RTCPeerConnection !== 'undefined';
+  // rich4-online fork: Firebase only — PeerJS's server and the STUN servers are not asked.
+  const rtc = typeof RTCPeerConnection !== 'undefined' && !firebaseOnly();
   const [relay, server, kinds] = await Promise.all([relayReachable(), rtc ? signalling() : Promise.resolve(false), rtc ? candidates() : Promise.resolve(new Set<string>())]);
   if (relay) return { ok: true };
+  // rich4-online fork: Firebase is the only way, so not reaching it is the answer.
+  if (firebaseOnly())
+    return { ok: false, title: '暫時無法聯機', text: `連不上連線伺服器，
+暫時無法進行多人對戰。
+${VPN}
+也請確認網路正常（公司、學校的網路可能擋住聯機），
+或換個網路再試。`, retry: true };
   if (!rtc)
     return { ok: false, title: '不支援聯機', text: '這支手機（或系統版本）不支援聯機功能，\n無法進行多人對戰。\n請更新系統後再試。', retry: false };
   return verdict(server, kinds);

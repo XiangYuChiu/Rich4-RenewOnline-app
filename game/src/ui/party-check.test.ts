@@ -9,11 +9,11 @@ import { ICE_SERVERS } from './party-net';
 const urls = ICE_SERVERS.flatMap(s => (Array.isArray(s.urls) ? s.urls : [s.urls]));
 
 describe('the network check (issue #12)', () => {
-  it("gathers with the game's own servers: public STUN reachable from mainland China, our TURN over UDP and TCP, none of PeerJS's", () => {
+  it("gathers with public STUN reachable from mainland China, none of PeerJS's, and (rich4-online fork) none of the author's servers", () => {
     expect(urls).toContain('stun:stun.chat.bilibili.com:3478');
     expect(urls).toContain('stun:stun.miwifi.com:3478');
-    expect(urls.some(u => u.startsWith('turn:') && u.endsWith('transport=udp'))).toBe(true);
-    expect(urls.some(u => u.startsWith('turn:') && u.endsWith('transport=tcp'))).toBe(true);
+    expect(urls.some(u => u.startsWith('turn:'))).toBe(false);
+    expect(urls.some(u => /flj\.info|areu\.pro/.test(u))).toBe(false);
     expect(urls.some(u => /peerjs/.test(u))).toBe(false);
   });
   it('a way out (STUN) plays; the relay only plays with a note', () => {

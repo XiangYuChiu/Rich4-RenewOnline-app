@@ -17,9 +17,13 @@ import { firebaseConfigured, openFirebase, type FirebaseConn, type FirebasePeer 
 /** The relayed way: the author's VPS (relay-peer.ts) or, in this fork, Firebase (firebase-peer.ts) — the same shape. */
 type Relay = RelayPeer | FirebasePeer;
 
-/** The relay (tools/party-relay; behind Caddy on 443 with its own certificate, 2026-11-03). */
-export const RELAYS = ['wss://rich.areu.pro'];
-const LIST_URL = 'https://raw.githubusercontent.com/iam567/rich4-renew-app/main/game/relay.json';
+/**
+ * The author's relay list (rich4-online fork: emptied). This fork relays through Firebase (firebase-peer.ts) and
+ * depends on no server of the original author's: no relay, no relay.json from the author's GitHub — and so no head
+ * count (party-presence.ts) or reports (party-report.ts), which went to the relay's address.
+ */
+export const RELAYS: string[] = [];
+const LIST_URL = '';
 const LIST_KEY = 'rich4.party.relays';
 
 /** A connection either way: PeerJS's DataConnection or a RelayConn (`via`: which). */
@@ -48,10 +52,17 @@ export const netConfig: { relays: string[] | null; peerOpts: Record<string, unkn
   firebase: !testing,
 };
 
+/**
+ * Firebase is this build's only way (rich4-online fork): no phone-to-phone PeerJS either — it would register room ids
+ * on PeerJS's public server, where the original game's phones could find them, and its TURN was the author's.
+ */
+export const firebaseOnly = () => netConfig.firebase && firebaseConfigured();
+
 let listed: Promise<string[]> | null = null;
 /** The relays to try: the tests' setting, else GitHub's list (3 s), else the last one seen, else the app's. */
 export function relays(): Promise<string[]> {
   if (netConfig.relays) return Promise.resolve(netConfig.relays);
+  if (!LIST_URL) return Promise.resolve(RELAYS);
   // A developer's own relay (a local test): localStorage rich4.party.relayDev = 'ws://127.0.0.1:8443'.
   try { const dev = localStorage.getItem('rich4.party.relayDev'); if (dev) return Promise.resolve([dev]); } catch { /* none */ }
   listed ??= (async () => {
@@ -147,6 +158,7 @@ export class NetPeer {
 
   /** Also reachable phone to phone (a named id: best effort, in the background). */
   attachP2P() {
+    if (firebaseOnly()) return null;
     if (this.p2p || this.opening || this.destroyed) return this.opening;
     this.opening = openP2P(this.id, this.peerOpts).then(p => {
       this.opening = null;
@@ -164,6 +176,7 @@ export class NetPeer {
       const c = await waitOpen(asConn(this.relay.connect(to)), 8000);
       if (c) { (c as { via?: string }).via = 'vps'; return c; }
     }
+    if (firebaseOnly()) return null;
     const p = this.p2p ?? await this.attachP2P();
     if (!p || this.destroyed) return null;
     const c = await waitOpen(asConn(p.connect(to, { reliable: true })), 10000, p);
@@ -194,6 +207,7 @@ function waitOpen(c: NetConn, ms: number, peer?: Peer): Promise<NetConn | null> 
 export async function openNet(id: string, named: boolean, peerOpts: Record<string, unknown> = netConfig.peerOpts): Promise<NetPeer | null> {
   const r = await relayFor(id);
   if (r === null) return null;            // taken on the relay
+  if (firebaseOnly()) return r === 'down' ? null : new NetPeer(id, r, null, peerOpts);
   if (r !== 'down') {
     const n = new NetPeer(id, r, null, peerOpts);
     if (named) void n.attachP2P();

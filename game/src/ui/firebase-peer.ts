@@ -53,7 +53,7 @@ let appName = '';
 export function setFirebaseConfig(c: FirebaseOptions | null, name = '') { config = c; appName = name; ready = null; }
 
 function envConfig(): FirebaseOptions | null {
-  const env = (import.meta as { env?: Record<string, string | undefined> }).env ?? {};
+  const env = import.meta.env as Record<string, string | undefined>;
   if (!env.VITE_FB_API_KEY || !env.VITE_FB_DB_URL) return null;
   return {
     apiKey: env.VITE_FB_API_KEY, authDomain: env.VITE_FB_AUTH_DOMAIN, databaseURL: env.VITE_FB_DB_URL,

@@ -28,7 +28,8 @@ import { hostMismatch, partyVersion, refuseGuest, statsByVersion } from './party
 export const PARTY_VERSION = partyVersion();
 
 // v2 (2026-10-22): with the heartbeat (issue #4); phones of v1 have their own rooms and list.
-const PREFIX = 'rich4-party-v2-';
+// rich4-online fork: its own prefix, so its rooms and list never meet the original game's.
+const PREFIX = 'rich4online-v1-';
 // v2 (2026-10-20): the list also counts private rooms and seekers; older versions keep their own list (v1).
 export const LOBBY = `${PREFIX}lobby-v2`;
 const roomId = (code: string) => `${PREFIX}room-${code}`;
@@ -174,8 +175,7 @@ const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
  */
 export const ICE_SERVERS: RTCIceServer[] = [
   { urls: ['stun:stun.l.google.com:19302', 'stun:stun.chat.bilibili.com:3478', 'stun:stun.miwifi.com:3478'] },
-  { urls: 'stun:game.flj.info:3478' },
-  { urls: ['turn:game.flj.info:3478?transport=udp', 'turn:game.flj.info:3478?transport=tcp'], username: 'rich4', credential: '29e57ad82edb53b7f8dde103' },
+  // rich4-online fork: the author's STUN / TURN (game.flj.info) removed; this build relays through Firebase.
 ];
 const PEER_OPTS = { debug: 0, config: { iceServers: ICE_SERVERS } };
 

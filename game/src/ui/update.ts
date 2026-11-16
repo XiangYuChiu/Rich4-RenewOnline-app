@@ -15,7 +15,12 @@ import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { audio } from './audio';
 
-const SERVER = 'https://rich.areu.pro/u';
+/**
+ * The update server (rich4-online fork): none unless the build sets VITE_UPDATE_SERVER (a server of the fork's own,
+ * laid out as below). Never the author's (https://rich.areu.pro/u): its update would replace this fork's code with the
+ * original's, and its newer version number would keep 派對模式 closed (partyNeedsUpdate).
+ */
+const SERVER = String(import.meta.env.VITE_UPDATE_SERVER ?? '').replace(/\/+$/, '');
 const DIR = 'rich4-update';
 /** The running version (in a downloaded version: its own). */
 export const RUNNING = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0';
@@ -105,7 +110,7 @@ let own: Promise<Manifest | null> | null = null;
 const installed = () => (own ??= getJson<Manifest>(new URL('update-base.json', typeof document === 'undefined' ? 'http://localhost/' : document.baseURI).href, 15000));
 
 /** The newest version on the server (null: no answer). */
-export const fetchLatest = () => getJson<Latest>(`${base()}/latest.json`);
+export const fetchLatest = (): Promise<Latest | null> => (SERVER ? getJson<Latest>(`${base()}/latest.json`) : Promise.resolve(null));
 
 let checked: { at: number; p: Promise<UpdateState> } | null = null;
 /** Whether a newer version is there and how it can be had (asked again after a minute). */
@@ -223,7 +228,7 @@ async function runUpdate(parent: HTMLElement, version: string): Promise<void> {
 }
 
 const INSTALLER = (v: string) => `新版本 v${v} 需要重新下載安裝包\n（存檔會保留）`;
-const DOWNLOAD_PAGE = 'https://github.com/iam567/rich4-renew-app/releases/latest';
+const DOWNLOAD_PAGE = 'https://github.com/XiangYuChiu/Rich4-RenewOnline-app/releases/latest';
 function openDownloadPage() { window.open(DOWNLOAD_PAGE, '_blank'); }
 
 /** The title: a newer version is offered once per start (playing alone may stay on the old one). */
