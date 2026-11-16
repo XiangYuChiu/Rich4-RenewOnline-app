@@ -70,7 +70,7 @@ npx tsc --noEmit
 | 1 | 讀懂原版網路層 | ✅ 程式碼閱讀完成（見第 4 節）；⏳ **原版跨網實測待使用者回家測** |
 | 2 | 建立 Firebase 專案 | ✅ 完成：專案 `rich4-online`、匿名登入、RTDB（asia-southeast1）、規則已發布；`scripts/firebase-smoke.mjs` 10 項全過，往返 153 ms |
 | 3 | 實作 `firebase-peer.ts` | ✅ 完成：即時測試 5/5；使用者以 Chrome＋Edge 實測可開房、加入、擲骰（2026-11-16） |
-| 4 | 切斷對原作者伺服器的依賴 | ⬜ **下一步** |
+| 4 | 切斷對原作者伺服器的依賴 | ⏳ **進行中** |
 | 5 | GAS 後勤 | ⬜ |
 | 6 | 打包 Windows / Android | ⬜ |
 | 7 | 跨網實測 | ⬜ |
