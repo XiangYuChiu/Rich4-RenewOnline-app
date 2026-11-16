@@ -12,6 +12,10 @@
  */
 import Peer, { type DataConnection } from 'peerjs';
 import { openRelay, RelayPeer, type RelayConn } from './relay-peer';
+import { firebaseConfigured, openFirebase, type FirebaseConn, type FirebasePeer } from './firebase-peer';
+
+/** The relayed way: the author's VPS (relay-peer.ts) or, in this fork, Firebase (firebase-peer.ts) — the same shape. */
+type Relay = RelayPeer | FirebasePeer;
 
 /** The relay (tools/party-relay; behind Caddy on 443 with its own certificate, 2026-11-03). */
 export const RELAYS = ['wss://rich.areu.pro'];
@@ -29,14 +33,19 @@ export interface NetConn {
   on(ev: 'data', fn: (d: unknown) => void): unknown;
   on(ev: 'error', fn: (e: unknown) => void): unknown;
 }
-const asConn = (c: DataConnection | RelayConn) => c as unknown as NetConn;
+const asConn = (c: DataConnection | RelayConn | FirebaseConn) => c as unknown as NetConn;
 
 type Handler = (...a: any[]) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-/** Settings the tests change: no relay at all (PeerJS only), PeerJS's options. */
-export const netConfig: { relays: string[] | null; peerOpts: Record<string, unknown> } = {
-  relays: typeof process !== 'undefined' && process.env?.VITEST ? [] : null,
+const testing = typeof process !== 'undefined' && !!process.env?.VITEST;
+/**
+ * Settings the tests change: no relay at all (PeerJS only), PeerJS's options; `firebase`: use Firebase as the relay
+ * when the build has a project (game/.env.local) — then the author's VPS is not tried at all.
+ */
+export const netConfig: { relays: string[] | null; peerOpts: Record<string, unknown>; firebase: boolean } = {
+  relays: testing ? [] : null,
   peerOpts: { debug: 0 },
+  firebase: !testing,
 };
 
 let listed: Promise<string[]> | null = null;
@@ -71,8 +80,13 @@ export function relays(): Promise<string[]> {
 let goodRelay = '';
 let downUntil = 0;
 
-async function relayFor(id: string): Promise<RelayPeer | null | 'down'> {
+async function relayFor(id: string): Promise<Relay | null | 'down'> {
   if (Date.now() < downUntil) return 'down';
+  if (netConfig.firebase && firebaseConfigured()) {
+    const r = await openFirebase(id, 8000);
+    if (r === 'down') downUntil = Date.now() + 60_000;
+    return r;
+  }
   const list = await relays();
   const order = goodRelay && list.includes(goodRelay) ? [goodRelay, ...list.filter(u => u !== goodRelay)] : list;
   for (const url of order) {
@@ -103,7 +117,7 @@ export class NetPeer {
   private opening: Promise<Peer | null> | null = null;
   destroyed = false;
 
-  constructor(readonly id: string, public relay: RelayPeer | null, public p2p: Peer | null, private readonly peerOpts: Record<string, unknown>) {
+  constructor(readonly id: string, public relay: Relay | null, public p2p: Peer | null, private readonly peerOpts: Record<string, unknown>) {
     if (relay) this.hook(relay, 'vps');
     if (p2p) this.hook(p2p, 'p2p');
   }
@@ -119,7 +133,7 @@ export class NetPeer {
   on(ev: string, fn: Handler): this { (this.h.get(ev) ?? this.h.set(ev, []).get(ev)!).push(fn); return this; }
   private emit(ev: string, ...a: unknown[]) { for (const fn of [...(this.h.get(ev) ?? [])]) fn(...a); }
 
-  private hook(p: RelayPeer | Peer, via: 'vps' | 'p2p') {
+  private hook(p: Relay | Peer, via: 'vps' | 'p2p') {
     (p as RelayPeer).on('connection', (c: NetConn) => { (c as { via?: string }).via = via; this.emit('connection', c); });
     if (via === 'p2p') {
       (p as Peer).on('disconnected', () => this.emit('disconnected'));

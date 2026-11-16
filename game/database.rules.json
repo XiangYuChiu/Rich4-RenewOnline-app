@@ -1,0 +1,24 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "peers": {
+      "$id": {
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid || now - data.child('at').val() > 20000) && (!newData.exists() || newData.child('uid').val() === auth.uid)",
+        ".validate": "!newData.exists() || ($id.length <= 120 && newData.hasChildren(['uid', 'at']) && newData.child('at').isNumber() && newData.child('at').val() <= now)"
+      }
+    },
+
+    "inbox": {
+      "$id": {
+        ".read": "auth != null && root.child('peers/' + $id + '/uid').val() === auth.uid",
+        "$msg": {
+          ".write": "auth != null && ((!data.exists() && newData.exists() && root.child('peers/' + newData.child('from').val() + '/uid').val() === auth.uid) || (!newData.exists() && root.child('peers/' + $id + '/uid').val() === auth.uid))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['from', 'cid', 't']) && newData.child('from').isString() && newData.child('cid').isString() && newData.child('cid').val().length <= 80 && (newData.child('t').val() === 'conn' || newData.child('t').val() === 'd' || newData.child('t').val() === 'close'))"
+        }
+      }
+    }
+  }
+}
