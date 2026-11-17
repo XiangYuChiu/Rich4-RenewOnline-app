@@ -1,7 +1,7 @@
 # 大富翁4 跨網連線版：施作進度
 
 > 給下一次開啟 Claude Code 的自己：先讀完這份檔案再動手。**在新電腦上請改依 `docs/online/HOME-SETUP.md` 從頭建置。**
-> 最後更新：2026-11-17（Windows 版已在家用電腦實測可執行遊戲；第 5 站清理腳本已寫好，**待使用者依 `GAS-SETUP.md` 安裝到 script.google.com**。之後：回家打包 Android APK，做第 7 站跨網實測）
+> 最後更新：2026-11-17（Windows 版已在家用電腦實測可執行遊戲；第 5 站清理腳本已寫好，**待使用者依 `GAS-SETUP.md` 安裝到 script.google.com**。**下一步：使用者回家依 HOME-SETUP.md 第 9 節做電腦對電腦的跨網實測**（手機是 iPhone，先不做手機））
 
 ### Firebase 專案（第 2 站產出）
 
@@ -72,8 +72,8 @@ npx tsc --noEmit
 | 3 | 實作 `firebase-peer.ts` | ✅ 完成：即時測試 5/5；使用者以 Chrome＋Edge 實測可開房、加入、擲骰（2026-11-16） |
 | 4 | 切斷對原作者伺服器的依賴 | ✅ 完成：使用者已在瀏覽器重測連線正常 |
 | 5 | GAS 後勤 | ⏳ 定時清理腳本 `gas/cleanup.gs` 已完成（單元測試過）；**待使用者依 `GAS-SETUP.md` 安裝**。戰績寫入試算表：之後再做 |
-| 6 | 打包 Windows / Android | ⏳ App ID 已改、Windows 版已打包，**使用者已在家用電腦確認 exe 可執行遊戲（2026-11-16 晚）**（見第 5.3 節）；**Android APK 待使用者在家用電腦打包（HOME-SETUP.md 第 8 節）** |
-| 7 | 跨網實測 | ⬜ 待 APK 完成後，依 HOME-SETUP.md 第 9 節 |
+| 6 | 打包 Windows / Android | ✅ App ID 已改、Windows 版已打包，**使用者已在家用電腦確認 exe 可執行遊戲（2026-11-16 晚）**（見第 5.3 節）；Android APK **暫緩**（使用者手機是 iPhone） |
+| 7 | 跨網實測 | ⬜ 改為**電腦對電腦**：電腦 A 家裡網路、電腦 B 連 iPhone 熱點，依 HOME-SETUP.md 第 9 節 |
 
 ### 待使用者回報：原版跨網實測
 
@@ -253,6 +253,15 @@ iOS 的 Bundle ID（`ios/App/App.xcodeproj`）沒改：沒有 Mac 無法打包 i
 - **逐則判斷時間而不是看 ID 是否還有人佔用**：新訊息的 `at` 一定是新的，所以清理不會刪到剛建立連線的訊息，沒有競態。
 - 遊戲端已處理「自己的 `peers/{id}` 被清掉」：`firebase-peer.ts` 的 `onValue` 會重新佔用（10 分鐘門檻下正常不會發生）。
 - 安全規則不用改：GAS 走管理權限。
+
+## 5.5 連線路徑查核（2026-11-17）
+
+確認遊戲連線只走 Firebase，不碰原作者任何伺服器：
+
+- **原始碼**：`game/src`、`desktop/` 中的外部網址只剩 Firebase 與本 Fork 的 GitHub Releases；`areu.pro`、`flj.info` 只出現在說明註解。
+- **建置產物**（`vite build` 後掃描 JS/HTML/JSON）：外部主機只有 Firebase（`rich4-online-default-rtdb…`、`securetoken.google.com`、`apis.google.com`、`www.google.com`）、`github.com`（本 Fork 的下載頁）、函式庫授權註解中的 `apache.org` / `capacitorjs.com`。
+- 唯一殘留：PeerJS 函式庫內建的預設伺服器常數 `0.peerjs.com`。Firebase 模式下 `firebaseOnly()` 為真，`net-peer.ts` 不會建立 PeerJS 連線，所以不會連線；要完全移除得刪掉 PeerJS 備援程式，目前不值得。
+- 在線人數、錯誤回報：轉發伺服器清單為空，不會送出。遊戲內更新：`VITE_UPDATE_SERVER` 未設定，停用。
 
 ## 6. 注意事項
 

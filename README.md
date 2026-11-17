@@ -14,8 +14,8 @@
 | 3 | 實作 Firebase 傳輸層 `firebase-peer.ts` | ✅ 瀏覽器實測可開房、加入、擲骰 |
 | 4 | 切斷對原作者伺服器的依賴（房間前綴、P2P 備援、遊戲內更新、回報） | ✅ 不再連線到原作者的任何伺服器 |
 | 5 | Google Apps Script 後勤（清理過期資料、戰績） | ⏳ 清理腳本完成，待安裝（[`GAS-SETUP.md`](docs/online/GAS-SETUP.md)）；戰績之後再做 |
-| 6 | 打包 Windows / Android | ⏳ Windows 版完成並實測可執行；Android APK 待打包 |
-| 7 | 跨網實測 | ⬜ |
+| 6 | 打包 Windows / Android | ✅ Windows 版完成並實測可執行；Android APK 暫緩 |
+| 7 | 跨網實測（電腦對電腦） | ⬜ |
 
 詳細的施作紀錄、設計與踩過的坑：[`docs/online/PROGRESS.md`](docs/online/PROGRESS.md)
 
