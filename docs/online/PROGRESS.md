@@ -1,7 +1,7 @@
 # 大富翁4 跨網連線版：施作進度
 
 > 給下一次開啟 Claude Code 的自己：先讀完這份檔案再動手。**在新電腦上請改依 `docs/online/HOME-SETUP.md` 從頭建置。**
-> 最後更新：2026-11-16（第 6 站：Windows 版已在公司電腦打包；**下一步：使用者回家依 HOME-SETUP.md 打包 Android APK，並做第 7 站跨網實測**）
+> 最後更新：2026-11-17（Windows 版已在家用電腦實測可執行遊戲；第 5 站清理腳本已寫好，**待使用者依 `GAS-SETUP.md` 安裝到 script.google.com**。之後：回家打包 Android APK，做第 7 站跨網實測）
 
 ### Firebase 專案（第 2 站產出）
 
@@ -31,7 +31,7 @@
 |---|---|
 | 專案根目錄 | `D:\Persional\rich4` |
 | 遊戲程式 | `D:\Persional\rich4\game`（Vite + TypeScript；`desktop/` 是 Electron 外殼） |
-| 工作分支 | `feature/online`（從 upstream `main` 的 `e07a1f6` = v1.2.0 開出，尚無 commit） |
+| 工作分支 | `feature/online`（從 upstream `main` 的 `e07a1f6` = v1.2.0 開出；推送後 `main` 快轉到同一個 commit） |
 | `origin` | https://github.com/XiangYuChiu/Rich4-RenewOnline-app.git（使用者的 Fork） |
 | `upstream` | https://github.com/iam567/rich4-renew-app.git（**push 已設為 DISABLED**） |
 | 素材 | `game/public/assets/`（1.4 GB，37,787 檔，已被 `.gitignore` 排除，**絕不提交**） |
@@ -71,8 +71,8 @@ npx tsc --noEmit
 | 2 | 建立 Firebase 專案 | ✅ 完成：專案 `rich4-online`、匿名登入、RTDB（asia-southeast1）、規則已發布；`scripts/firebase-smoke.mjs` 10 項全過，往返 153 ms |
 | 3 | 實作 `firebase-peer.ts` | ✅ 完成：即時測試 5/5；使用者以 Chrome＋Edge 實測可開房、加入、擲骰（2026-11-16） |
 | 4 | 切斷對原作者伺服器的依賴 | ✅ 完成：使用者已在瀏覽器重測連線正常 |
-| 5 | GAS 後勤 | ⬜（不影響遊玩，之後再做） |
-| 6 | 打包 Windows / Android | ⏳ App ID 已改、Windows 版已打包（見第 5.3 節）；**Android APK 待使用者在家用電腦打包（HOME-SETUP.md 第 8 節）** |
+| 5 | GAS 後勤 | ⏳ 定時清理腳本 `gas/cleanup.gs` 已完成（單元測試過）；**待使用者依 `GAS-SETUP.md` 安裝**。戰績寫入試算表：之後再做 |
+| 6 | 打包 Windows / Android | ⏳ App ID 已改、Windows 版已打包，**使用者已在家用電腦確認 exe 可執行遊戲（2026-11-16 晚）**（見第 5.3 節）；**Android APK 待使用者在家用電腦打包（HOME-SETUP.md 第 8 節）** |
 | 7 | 跨網實測 | ⬜ 待 APK 完成後，依 HOME-SETUP.md 第 9 節 |
 
 ### 待使用者回報：原版跨網實測
@@ -168,7 +168,7 @@ inbox/{peerId}/{pushId}   { from, cid, t, d }  # 送給 peerId 的訊息；t = c
 
 ## 5.1 第 3 站實作紀錄
 
-已完成的修改（尚未 commit）：
+已完成的修改：
 
 | 檔案 | 內容 |
 |---|---|
@@ -240,9 +240,22 @@ iOS 的 Bundle ID（`ios/App/App.xcodeproj`）沒改：沒有 Mac 無法打包 i
 - 啟動時 Windows 防火牆會詢問是否允許網路存取：**按「取消」即可**。遊戲只需要往外連 Firebase（443 埠），不需要輸入連線。
 - 為避免公司 IT 疑慮，公司電腦上的打包產物已刪除。**之後打包好的 exe／APK 只在家用電腦執行**；公司電腦只寫程式、跑測試與開發伺服器。
 
+## 5.4 第 5 站實作紀錄
+
+| 檔案 | 內容 |
+|---|---|
+| `gas/cleanup.gs` | 每小時執行：讀 `peers` 與 `inbox`，刪除 `at` 超過 10 分鐘的紀錄；一整個 inbox 都過期就整個刪。以 PATCH（值為 null）分批刪除，每批 500 條 |
+| `gas/appsscript.json` | 宣告 `firebase.database`、`userinfo.email` 等 OAuth 範圍 |
+| `gas/cleanup.test.mjs` | `planCleanup()` 的單元測試：`node gas/cleanup.test.mjs` |
+| `docs/online/GAS-SETUP.md` | 安裝步驟（使用者操作） |
+
+- **不用密鑰**：用執行者帳號的 OAuth token（`ScriptApp.getOAuthToken()`）以 `?access_token=` 呼叫 RTDB REST API；專案擁有者的帳號有管理權限、不受安全規則限制。備案：指令碼屬性 `FB_SECRET`（舊版資料庫密鑰）。
+- **逐則判斷時間而不是看 ID 是否還有人佔用**：新訊息的 `at` 一定是新的，所以清理不會刪到剛建立連線的訊息，沒有競態。
+- 遊戲端已處理「自己的 `peers/{id}` 被清掉」：`firebase-peer.ts` 的 `onValue` 會重新佔用（10 分鐘門檻下正常不會發生）。
+- 安全規則不用改：GAS 走管理權限。
+
 ## 6. 注意事項
 
 - 素材屬原版權方，僅供私人使用：**不提交、不上傳到任何公開網址**。
 - 程式碼是 GPL-3.0-or-later：發佈修改版要公開原始碼（Fork 保持公開即可）。
 - `npm ci` 回報 7 個套件弱點（2 個 critical）是原版就有的，打包發佈前再一起評估，目前不動。
-- 目前 `feature/online` 還沒有 commit。本文件與 `CLAUDE.md` 是第一批新增的檔案。
