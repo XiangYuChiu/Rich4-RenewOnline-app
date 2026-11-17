@@ -1,7 +1,7 @@
 # 大富翁4 跨網連線版：施作進度
 
 > 給下一次開啟 Claude Code 的自己：先讀完這份檔案再動手。**在新電腦上請改依 `docs/online/HOME-SETUP.md` 從頭建置。**
-> 最後更新：2026-11-17（Windows 版已在家用電腦實測可執行遊戲；第 5 站清理腳本已寫好，**待使用者依 `GAS-SETUP.md` 安裝到 script.google.com**。**下一步：使用者回家依 HOME-SETUP.md 第 9 節做電腦對電腦的跨網實測**（手機是 iPhone，先不做手機））
+> 最後更新：2026-11-17（README 新增「下一步（詳細做法）」與 AGENTS.md；Windows 版已在家用電腦實測可執行遊戲；第 5 站清理腳本已寫好，**待使用者依 `GAS-SETUP.md` 安裝到 script.google.com**。**下一步：使用者回家依 HOME-SETUP.md 第 9 節做電腦對電腦的跨網實測**（手機是 iPhone，先不做手機））
 
 ### Firebase 專案（第 2 站產出）
 

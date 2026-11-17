@@ -15,11 +15,113 @@
 | 4 | 切斷對原作者伺服器的依賴（房間前綴、P2P 備援、遊戲內更新、回報） | ✅ 不再連線到原作者的任何伺服器 |
 | 5 | Google Apps Script 後勤（清理過期資料、戰績） | ⏳ 清理腳本完成，待安裝（[`GAS-SETUP.md`](docs/online/GAS-SETUP.md)）；戰績之後再做 |
 | 6 | 打包 Windows / Android | ✅ Windows 版完成並實測可執行；Android APK 暫緩 |
-| 7 | 跨網實測（電腦對電腦） | ⬜ |
+| 7 | 跨網實測（電腦對電腦） | ⬜ **← 下一步，做法見下方「下一步」** |
 
 詳細的施作紀錄、設計與踩過的坑：[`docs/online/PROGRESS.md`](docs/online/PROGRESS.md)
 
 在新電腦上從零建置、打包 Windows / Android、做跨網測試：[`docs/online/HOME-SETUP.md`](docs/online/HOME-SETUP.md)
+
+## 下一步（詳細做法）
+
+> 這一節寫給**使用者本人**，以及接手的 AI 助手（Claude Code、Codex CLI 等）。照順序做即可，不需要先讀其他文件。
+> 標【使用者】的步驟要人在電腦前操作；標【AI】的步驟可以交給 AI 助手。
+> 最後更新：2026-11-17
+
+### 現況一句話
+
+連線改走 Firebase 的程式**已完成**，Windows 版 `Rich4Online.exe` 已在家用電腦確認**單機能啟動**；**還沒有實際測過兩個玩家連線對戰**。使用者的手機是 iPhone，所以 Android APK 暫緩，**跨網測試改用兩台電腦**。
+
+### 步驟 1：確認手上有可執行的 `Rich4Online.exe`【使用者】
+
+- 家用電腦上之前打包好的位置是 `<打包資料夾>\win-unpacked\Rich4Online.exe`（建置指南的範例資料夾是 `D:\rich4-release`；若當時填了別的位置，就去那裡找）。
+- 找不到、或程式碼有更新需要重新打包：照 [`docs/online/HOME-SETUP.md`](docs/online/HOME-SETUP.md) 第 7 節打包（約 10–20 分鐘）。【AI】可以代為執行打包指令。
+- ⚠️ 這個 exe 與 `win-unpacked` 資料夾內含有版權的素材：**只在自己的電腦之間用隨身碟複製，不要上傳到雲端硬碟、GitHub 或任何網址。**
+
+### 步驟 2：同一台電腦開兩個玩家（暖身，約 15 分鐘）【使用者】
+
+目的：先確認「建房 → 加入 → 對戰」整個流程能走通。這一步也是透過 Firebase 連線，只是兩個玩家在同一個網路。
+
+1. 雙擊 `Rich4Online.exe`，這是**玩家 1**。
+2. 開 **PowerShell**（開始選單搜尋 PowerShell），貼上下面這行並按 Enter，開出**玩家 2**。
+   把 `D:\rich4-release` 換成步驟 1 實際的資料夾：
+   ```powershell
+   $env:RICH4_USER_DATA="$env:APPDATA\rich4-online-p2"; & 'D:\rich4-release\win-unpacked\Rich4Online.exe'
+   ```
+   `RICH4_USER_DATA` 讓第二個視窗用另一個資料夾存資料，Firebase 才會把它當成另一個玩家。
+   若出現「Windows 防火牆」詢問視窗，按「**取消**」即可（遊戲只往外連，不需要別人連進來）。
+3. 玩家 1：主選單 →「**派對模式**」→「**建立房間**」→ 選「**私享房間**」→ 畫面會顯示 **4 位數房間碼**。
+4. 玩家 2：主選單 →「**派對模式**」→「**進入房間**」→ 輸入那 4 位數字。
+5. 玩家 1 看到玩家 2 進房後按「**開始遊戲**」，兩邊輪流擲骰，玩 **3–5 回合**，並在聊天框各打一句話。
+6. 記下結果（見步驟 4 的格式）：
+   - 能不能進房、能不能開始
+   - 兩邊畫面是否一致（金錢、位置相同）
+   - 玩家名字旁的延遲數字（例如 `85 ms`；綠色 ≤100、黃色 ≤250、紅色更慢）
+
+### 步驟 3：兩台電腦、兩種網路（真正的跨網測試，約 40 分鐘）【使用者】
+
+目的：確認**不同網路**的玩家能一起玩，這是本 Fork 的最終目的。
+
+準備：
+- **電腦 A**（家用桌機）：連**家裡的網路**。
+- **電腦 B**（筆電或另一台電腦）：開 iPhone「設定 → 個人熱點」，電腦 B 的 Wi-Fi **只連 iPhone 熱點**，不要連家裡 Wi-Fi。
+- 用隨身碟把電腦 A 上**整個 `win-unpacked` 資料夾**（約 1.5 GB）複製到電腦 B 任意位置。電腦 B 不需要安裝 Node 或任何開發工具。
+- 熱點會用掉行動數據：遊戲本身每小時約 2 MB，主要耗量是電腦 B 的系統更新，可先暫停 Windows Update。
+
+測試：
+1. 電腦 A 雙擊 `Rich4Online.exe` → 派對模式 → 建立房間 → 私享房間 → 記下房間碼。
+2. 電腦 B 雙擊 `Rich4Online.exe` → 派對模式 → 進入房間 → 輸入房間碼。
+3. 開始遊戲，玩**至少 10 回合**，雙方都在聊天框打字。
+4. **斷線測試**：電腦 B 關閉 Wi-Fi，等 **10 秒**再打開，看能否自動接回並繼續玩。
+5. **背景測試**：電腦 B 把遊戲視窗最小化 **30 秒**再還原，看遊戲是否繼續。
+6. 兩台各記下延遲數字。
+
+### 步驟 4：回報結果【使用者】→ 寫進文件【AI】
+
+使用者把結果用下面格式告訴 AI 助手（照抄填空即可）：
+
+```
+步驟 2（同機雙開）：進房 成功/失敗；開始遊戲 成功/失敗；畫面一致 是/否；延遲 ___ ms
+步驟 3（跨網）：進房 成功/失敗；玩了 ___ 回合；畫面一致 是/否
+  關 Wi-Fi 10 秒：自動接回 是/否（若否，畫面顯示什麼）
+  最小化 30 秒：遊戲繼續 是/否
+  延遲：電腦 A ___ ms，電腦 B ___ ms
+其他問題：（錯誤訊息、卡住的畫面，可附截圖）
+```
+
+AI 助手收到後要做：
+1. 把結果寫進 `docs/online/PROGRESS.md` 第 3 節「各站狀態」表格第 7 站，並更新檔案開頭的「最後更新」。
+2. 同步更新本 README 的「目前進度」表與本節「現況一句話」。
+3. 依下面「出問題時」排查；修好後重新打包，請使用者重測。
+4. 提交並推送（規則見下方「給 AI 助手的規則」）。
+
+### 出問題時
+
+| 現象 | 先看哪裡 |
+|---|---|
+| 進房間時說連不上／「暫時無法聯機」 | 遊戲視窗按 **Ctrl+Shift+I** 開開發者工具 → Console 分頁，把紅字截圖 |
+| 測試時 Firebase Console 的 `peers` 底下**完全沒有資料** | exe 打包時 `game/.env.local` 不存在，裡面沒有 Firebase 設定，遊戲會改用 PeerJS 公用伺服器直連（不是走 Firebase）。補上 `.env.local` 後重新打包（HOME-SETUP.md 第 5、7 節） |
+| 輸入房間碼後說房間不存在 | Firebase Console → Realtime Database → 資料，看 `peers` 底下有沒有 `rich4online-v1-room-<房間碼>` |
+| 能進房但畫面不同步、卡住 | 同上看 `inbox` 底下是否堆積訊息；把兩台的 Console 截圖給 AI |
+| 斷線後沒有接回 | 記下等了多久、畫面顯示什麼。程式設計是 55 秒內回來都能接回 |
+
+### 之後的工作（測試通過後）
+
+| 項目 | 誰 | 說明 |
+|---|---|---|
+| 安裝 Firebase 定時清理 | 使用者（約 5 分鐘，瀏覽器操作） | 照 [`docs/online/GAS-SETUP.md`](docs/online/GAS-SETUP.md)；不影響遊玩，只是避免資料庫累積垃圾 |
+| 戰績寫入 Google 試算表 | AI 實作 | 第 5 站後半，尚未開始，使用者決定要不要做 |
+| 給朋友玩 | 使用者 | 把 `win-unpacked` 資料夾私下給朋友（不可公開散布素材） |
+| iPhone / Android / 網頁版 | 暫緩 | iPhone App 需要 Mac；網頁版要公開網址會散布素材，不做 |
+
+### 給 AI 助手的規則
+
+- 使用**繁體中文**與使用者溝通。
+- 工作分支 `feature/online`；推送後把 `main` 快轉到同一個 commit：`git push origin feature/online && git push origin feature/online:main`。**禁止推送到 `upstream`**（原作者）。
+- 提交身分：`XiangYuChiu <61840928+XiangYuChiu@users.noreply.github.com>`（repo 已設定）。
+- **絕不提交**：`game/public/assets/`（版權素材）、`game/.env.local`（Firebase 設定）、任何打包產物。提交前先看 `git status`，不要用 `git add -A`。
+- 每完成一個步驟，更新 `docs/online/PROGRESS.md`（狀態表、最後更新）與本 README 的進度表、本節。
+- 在新電腦上（沒有 `game/public/assets` 或 `game/.env.local`）：照 [`docs/online/HOME-SETUP.md`](docs/online/HOME-SETUP.md) 從頭建置。
+- 技術細節、設計與踩過的坑：[`docs/online/PROGRESS.md`](docs/online/PROGRESS.md)。
 
 ## 運作方式
 

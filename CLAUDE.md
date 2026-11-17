@@ -1,6 +1,6 @@
 # Rich4 跨網連線版（使用者的 Fork）
 
-開始任何工作前，先讀 `docs/online/PROGRESS.md`：裡面有目標、目前進度、下一步。
+開始任何工作前，先讀 `README.md` 的「目前進度」與「下一步（詳細做法）」，再讀 `docs/online/PROGRESS.md`（技術細節與歷史）。`AGENTS.md` 是給 Codex CLI 的同內容入口，改規則時兩邊一起改。
 
 - **在新的電腦上（例如還沒有 `game/public/assets` 或 `game/.env.local`）**：依 `docs/online/HOME-SETUP.md` 從頭建置，那份文件假設你沒有任何先前的記憶。
 - 使用繁體中文與使用者溝通。
