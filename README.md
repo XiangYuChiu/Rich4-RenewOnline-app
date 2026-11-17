@@ -13,7 +13,7 @@
 | 2 | 建立 Firebase 專案（匿名登入、Realtime Database、安全規則） | ✅ |
 | 3 | 實作 Firebase 傳輸層 `firebase-peer.ts` | ✅ 瀏覽器實測可開房、加入、擲骰 |
 | 4 | 切斷對原作者伺服器的依賴（房間前綴、P2P 備援、遊戲內更新、回報） | ✅ 不再連線到原作者的任何伺服器 |
-| 5 | Google Apps Script 後勤（清理過期資料、戰績） | ⏳ 清理腳本完成，待安裝（[`GAS-SETUP.md`](docs/online/GAS-SETUP.md)）；戰績之後再做 |
+| 5 | Google Apps Script 後勤（清理過期資料、戰績） | ✅ 定時清理已安裝，每小時執行；戰績未做 |
 | 6 | 打包 Windows / Android | ✅ Windows 版完成並實測可執行；Android APK 暫緩 |
 | 7 | 跨網實測（電腦對電腦） | ⬜ **← 下一步，做法見下方「下一步」** |
 
@@ -111,7 +111,7 @@ AI 助手收到後要做：
 
 | 項目 | 誰 | 說明 |
 |---|---|---|
-| 安裝 Firebase 定時清理 | 使用者（約 5 分鐘，瀏覽器操作） | 照 [`docs/online/GAS-SETUP.md`](docs/online/GAS-SETUP.md)；不影響遊玩，只是避免資料庫累積垃圾 |
+| Firebase 定時清理 | 已完成 | 2026-11-17 已安裝，每小時執行（GAS 專案「rich4-online 清理」；改了 `gas/cleanup.gs` 要照 [`GAS-SETUP.md`](docs/online/GAS-SETUP.md) 重新貼上） |
 | 戰績寫入 Google 試算表 | AI 實作 | 第 5 站後半，尚未開始，使用者決定要不要做 |
 | 給朋友玩 | 使用者 | 把 `win-unpacked` 資料夾私下給朋友（不可公開散布素材） |
 | iPhone / Android / 網頁版 | 暫緩 | iPhone App 需要 Mac；網頁版要公開網址會散布素材，不做 |

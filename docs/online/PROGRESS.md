@@ -1,7 +1,7 @@
 # 大富翁4 跨網連線版：施作進度
 
 > 給下一次開啟 Claude Code 的自己：先讀完這份檔案再動手。**在新電腦上請改依 `docs/online/HOME-SETUP.md` 從頭建置。**
-> 最後更新：2026-11-17（README 新增「下一步（詳細做法）」與 AGENTS.md；Windows 版已在家用電腦實測可執行遊戲；第 5 站清理腳本已寫好，**待使用者依 `GAS-SETUP.md` 安裝到 script.google.com**。**下一步：使用者回家依 HOME-SETUP.md 第 9 節做電腦對電腦的跨網實測**（手機是 iPhone，先不做手機））
+> 最後更新：2026-11-17（README 新增「下一步（詳細做法）」與 AGENTS.md；Windows 版已在家用電腦實測可執行遊戲；第 5 站清理腳本已安裝並每小時執行；**下一步：使用者回家依 HOME-SETUP.md 第 9 節做電腦對電腦的跨網實測**（手機是 iPhone，先不做手機））
 
 ### Firebase 專案（第 2 站產出）
 
@@ -71,7 +71,7 @@ npx tsc --noEmit
 | 2 | 建立 Firebase 專案 | ✅ 完成：專案 `rich4-online`、匿名登入、RTDB（asia-southeast1）、規則已發布；`scripts/firebase-smoke.mjs` 10 項全過，往返 153 ms |
 | 3 | 實作 `firebase-peer.ts` | ✅ 完成：即時測試 5/5；使用者以 Chrome＋Edge 實測可開房、加入、擲骰（2026-11-16） |
 | 4 | 切斷對原作者伺服器的依賴 | ✅ 完成：使用者已在瀏覽器重測連線正常 |
-| 5 | GAS 後勤 | ⏳ 定時清理腳本 `gas/cleanup.gs` 已完成（單元測試過）；**待使用者依 `GAS-SETUP.md` 安裝**。戰績寫入試算表：之後再做 |
+| 5 | GAS 後勤 | ✅ 定時清理已安裝（2026-11-17）：GAS 專案「rich4-online 清理」，每小時執行；首次執行刪除 36 筆（peers 34、inbox 2，皆為先前測試殘留）。戰績寫入試算表：未做，使用者決定要不要做 |
 | 6 | 打包 Windows / Android | ✅ App ID 已改、Windows 版已打包，**使用者已在家用電腦確認 exe 可執行遊戲（2026-11-16 晚）**（見第 5.3 節）；Android APK **暫緩**（使用者手機是 iPhone） |
 | 7 | 跨網實測 | ⬜ 改為**電腦對電腦**：優先採用「使用者在家用 exe 開房、朋友在他家用 exe 加入」；備案為電腦 B 連 iPhone 熱點。做法見 README「下一步」 |
 
@@ -248,6 +248,8 @@ iOS 的 Bundle ID（`ios/App/App.xcodeproj`）沒改：沒有 Mac 無法打包 i
 | `gas/appsscript.json` | 宣告 `firebase.database`、`userinfo.email` 等 OAuth 範圍 |
 | `gas/cleanup.test.mjs` | `planCleanup()` 的單元測試：`node gas/cleanup.test.mjs` |
 | `docs/online/GAS-SETUP.md` | 安裝步驟（使用者操作） |
+
+**已安裝**（2026-11-17）：script.google.com 專案「rich4-online 清理」，用 Firebase 專案擁有者帳號、OAuth 方式（未用 `FB_SECRET`），觸發器每小時執行 `cleanup`。改了 `gas/cleanup.gs` 要手動重新貼上。
 
 - **不用密鑰**：用執行者帳號的 OAuth token（`ScriptApp.getOAuthToken()`）以 `?access_token=` 呼叫 RTDB REST API；專案擁有者的帳號有管理權限、不受安全規則限制。備案：指令碼屬性 `FB_SECRET`（舊版資料庫密鑰）。
 - **逐則判斷時間而不是看 ID 是否還有人佔用**：新訊息的 `at` 一定是新的，所以清理不會刪到剛建立連線的訊息，沒有競態。
