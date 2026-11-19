@@ -174,6 +174,7 @@ export class FirebasePeer extends Emitter {
     this.subs.push(onValue(ref(db, '.info/connected'), s => {
       const up = !!s.val();
       if (up === this.online) return;
+      console.warn('[party]', new Date().toISOString().slice(11, 23), `firebase ${up ? 'connected' : 'DISCONNECTED'} (${this.id.slice(-6)})`);
       this.online = up;
       if (!up) { if (!this.lostAt) this.lostAt = Date.now(); return; }
       // Back: take the id again (still ours unless someone took it while away), read what waited.

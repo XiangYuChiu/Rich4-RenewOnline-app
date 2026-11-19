@@ -762,7 +762,7 @@ async function begin(mapId: number, make: (board: import('../core/board').Board)
   (window as unknown as { __rich4: unknown }).__rich4 = { game, hud, view, weather, room, ctx: () => hud.context(shell), askScreens, fxScreens, world: ty?.world,
     ending: ty ? (winner: number) => tycoonEnding(hud.context(shell), ty.world, winner) : undefined,
     results: (winner: number) => (ty ? tycoonEnding(hud.context(shell), ty.world, winner, () => Promise.resolve(false))
-      : showResults(bank!, shell, gameResults(game, winner), { mapName: mapName(game.settings.mapId), next: () => nextGame(shell, game.settings, game.players.filter(p => p.human).map(p => p.character), game.settings.mapId) })) };
+      : showResults(bank!, shell, gameResults(game, winner), { mapName: mapName(game.settings.mapId), ...(room ? {} : { next: () => nextGame(shell, game.settings, game.players.filter(p => p.human).map(p => p.character), game.settings.mapId) }) })) };
   const baseRefresh = hud.refresh.bind(hud);
   hud.refresh = () => { baseRefresh(); today.update(); if (layout !== 0 || shell.classList.contains('portrait') || shell.classList.contains('roomy')) minimap.update(); };
   // 視窗組 (RICH4.CFG +5): what the right column shows; kept between games.
@@ -1647,7 +1647,7 @@ async function begin(mapId: number, make: (board: import('../core/board').Board)
           const results = gameResults(game, s.winner);
           run = recordResult(run, results);
           const humans = game.players.filter(p => p.human).map(p => p.character);
-          const act = await showResults(bank!, shell, results, { mapName: mapName(game.settings.mapId), next: () => nextGame(shell, game.settings, humans, game.settings.mapId) });
+          const act = await showResults(bank!, shell, results, { mapName: mapName(game.settings.mapId), ...(room ? {} : { next: () => nextGame(shell, game.settings, humans, game.settings.mapId) }) });
           if (act === 'home') location.reload();
         }
         return;

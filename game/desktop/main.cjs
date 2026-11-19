@@ -8,6 +8,10 @@ const { pathToFileURL } = require('node:url');
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } }]);
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+// rich4-online fork: the party heartbeat runs on timers; a window behind others must not be slowed down (a guest looked dead to the host).
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 
 // Test runs keep their own profile (RICH4_USER_DATA=<dir>): the player's saves in the app's real profile stay untouched.
 // rich4-online fork: always its own profile folder (%APPDATA%\rich4-online), never the original game's 大富翁4 — that
@@ -58,7 +62,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: size ? Number(size[1]) : 1280, height: size ? Number(size[2]) : 800, useContentSize: !!size,
     minWidth: size ? 200 : 800, minHeight: size ? 200 : 500, backgroundColor: '#0b2427', title: '大富翁4連線版',
-    autoHideMenuBar: true, webPreferences: { contextIsolation: true, sandbox: true, preload: join(__dirname, 'preload.cjs') },
+    autoHideMenuBar: true, webPreferences: { backgroundThrottling: false, contextIsolation: true, sandbox: true, preload: join(__dirname, 'preload.cjs') },
   });
   win.loadURL('app://rich4/index.html');
   // Test runs: the page asks for a picture of itself (console 'RICH4-SHOT name' -> RICH4_SHOTS_DIR/name.png).

@@ -1,7 +1,7 @@
 # 大富翁4 跨網連線版：施作進度
 
 > 給下一次開啟 Claude Code 的自己：先讀完這份檔案再動手。**在新電腦上請改依 `docs/online/HOME-SETUP.md` 從頭建置。**
-> 最後更新：2026-11-17（README 新增「下一步（詳細做法）」與 AGENTS.md；Windows 版已在家用電腦實測可執行遊戲；第 5 站清理腳本已安裝並每小時執行；**下一步：使用者回家依 HOME-SETUP.md 第 9 節做電腦對電腦的跨網實測**（手機是 iPhone，先不做手機））
+> 最後更新：2026-11-19（朋友實測回報三個問題，見第 5.6 節；已修「下一局」會關房間）；前次 2026-11-17（README 新增「下一步（詳細做法）」與 AGENTS.md；Windows 版已在家用電腦實測可執行遊戲；第 5 站清理腳本已安裝並每小時執行；**下一步：使用者回家依 HOME-SETUP.md 第 9 節做電腦對電腦的跨網實測**（手機是 iPhone，先不做手機））
 
 ### Firebase 專案（第 2 站產出）
 
@@ -264,6 +264,18 @@ iOS 的 Bundle ID（`ios/App/App.xcodeproj`）沒改：沒有 Mac 無法打包 i
 - **建置產物**（`vite build` 後掃描 JS/HTML/JSON）：外部主機只有 Firebase（`rich4-online-default-rtdb…`、`securetoken.google.com`、`apis.google.com`、`www.google.com`）、`github.com`（本 Fork 的下載頁）、函式庫授權註解中的 `apache.org` / `capacitorjs.com`。
 - 唯一殘留：PeerJS 函式庫內建的預設伺服器常數 `0.peerjs.com`。Firebase 模式下 `firebaseOnly()` 為真，`net-peer.ts` 不會建立 PeerJS 連線，所以不會連線；要完全移除得刪掉 PeerJS 備援程式，目前不值得。
 - 在線人數、錯誤回報：轉發伺服器清單為空，不會送出。遊戲內更新：`VITE_UPDATE_SERVER` 未設定，停用。
+
+## 5.6 朋友實測回報（2026-11-19）
+
+朋友拿打包好的 exe 跨網測試，回報三個問題：
+
+| # | 問題 | 狀態 |
+|---|---|---|
+| 1 | 檔案 1.6 GB | 素材已是 WebP，zip 無損壓縮沒用。新增 `game/scripts/recompress-dist.py`（Pillow，只處理 `dist`，不動 `public/assets`）：WebP 重壓 q80，素材 1,245→898 MB。打包後資料夾約 1.3 GB（素材 1,030＋Electron 280），zip（WebP/PNG/m4a 不壓、其餘 deflate）約 1.2 GB。要更小可降到 q70 或把 `hd` 縮 75%（原作者的 `RICH4_SHRINK`，但需要 `cwebp`，自動下載被擋，需使用者自行安裝） |
+| 2 | 同一局第三輪擲骰時房客斷線，房主仍在 | 根因未確認。真資料庫雙人互傳 7 分鐘（每 3 秒 ping＋每 30 秒一批答案）0 斷線、最大間隔 3.5 秒（`firebase-soak.live.test.ts`），所以傳輸層本身穩定，推測是朋友那端網路或視窗被降速。已做：判定「沉默＝斷線」由 10 秒放寬為 25 秒（`Room.SILENT_MS`）；Electron 關閉背景節流（`desktop/main.cjs`）；新增連線日誌 `netlog()`（Console 的 `[party]`，也存 localStorage `rich4.party.log` 最近 200 行） |
+| 3 | 房客斷線重連後變成複製舊進度開新房間 | 根因未確認。自動重連（`rejoin`）失敗後，使用者重新輸入房間碼走的是 `hi`→`resume` 路徑（從最新回合快照載入），看起來像新房間。需要日誌確認自動重連為何失敗 |
+
+（先前「下一局會關房間」的修正仍保留：派對模式結算不顯示「下一局」。那不是這次斷線的原因。）
 
 ## 6. 注意事項
 

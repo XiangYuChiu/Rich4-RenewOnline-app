@@ -308,6 +308,16 @@ export class Lobby {
   }
 }
 
+/** Fork: a short connection log kept on the device (localStorage `rich4.party.log`, last 200 lines) and in the console, for finding why a phone dropped. */
+export function netlog(what: string) {
+  const line = `${new Date().toISOString().slice(11, 23)} ${what}`;
+  console.warn('[party]', line);
+  try {
+    const k = 'rich4.party.log', a = JSON.parse(localStorage.getItem(k) ?? '[]') as string[];
+    a.push(line); localStorage.setItem(k, JSON.stringify(a.slice(-200)));
+  } catch { /* not kept */ }
+}
+
 /** One room: the host's side or a guest's (and a guest that becomes the host). */
 export class Room {
   code = '';
@@ -394,7 +404,7 @@ export class Room {
    * the hand-over starts).
    */
   private static readonly PING_MS = 3000;
-  private static readonly SILENT_MS = 10000;
+  private static readonly SILENT_MS = 25000;
   private lastSeen = new Map<string, number>();
   private hostSeen = 0;
   /** Round trips (ms, the newest few): the host's to each guest, a guest's to the host. */
@@ -562,12 +572,15 @@ export class Room {
     if (this.rejoining) return;
     this.rejoining = true;
     const lost = this.lostHost || this.members[0]?.id || '';
+    netlog(`guest: lost host (silent ${Date.now() - this.hostSeen} ms), rejoining`);
     this.onStatus('與房主的連線中斷，重新連線中…');
     if (this.started) void reportParty('drop', `與房主（${this.nameOf(lost)}）的連線中斷`, { seq: this.log.length });
     for (let k = 0; !this.closed && !this.toHost && !this.host; k++) {
       await wait(Math.min(2000 + k * 1000, 6000));
       if (this.closed || this.host) break;
-      if (await this.reach()) break;
+      const ok = await this.reach();
+      netlog(`guest: rejoin try ${k} ${ok ? 'ok' : 'failed'}`);
+      if (ok) break;
       const next = this.members.find(x => x.id !== lost);
       if (next?.id === this.myId && k >= 1) {
         const p = await open(roomId(this.code));
@@ -678,6 +691,7 @@ export class Room {
   /** A guest's connection closed, or it went silent (heartbeat): it is gone until it comes back. */
   private dropGuest(c: NetConn) {
     if (this.guests.get(c.peer) !== c) return;
+    netlog(`host: guest ${this.nameOf(c.peer)} dropped (silent ${Date.now() - (this.lastSeen.get(c.peer) ?? Date.now())} ms, conn open=${c.open})`);
     this.guests.delete(c.peer);
     this.lastSeen.delete(c.peer);
     try { c.close(); } catch { /* already closed */ }
