@@ -123,7 +123,7 @@ node scripts/bundle-assets.mjs           # 把遊戲用到的素材複製進 dis
 cd desktop
 npm install
 $env:RICH4_DIST=(Resolve-Path ..\dist).Path
-$env:RICH4_DESKTOP_OUT='D:\rich4-release'   # repo 外面的資料夾，換成你要的位置
+$env:RICH4_DESKTOP_OUT='D:\Persional\Rich4\rich4-release'   # repo 外面的資料夾，換成你要的位置
 npx electron-builder --config electron-builder.config.cjs --win zip --x64
 ```
 
@@ -162,7 +162,7 @@ npm run package -- apk
 
 ```powershell
 # 第二個視窗（第一個直接雙擊 Rich4Online.exe）
-$env:RICH4_USER_DATA="$env:APPDATA\rich4-online-p2"; & 'D:\rich4-release\win-unpacked\Rich4Online.exe'
+$env:RICH4_USER_DATA="$env:APPDATA\rich4-online-p2"; & 'D:\Persional\Rich4\rich4-release\win-unpacked\Rich4Online.exe'
 ```
 
 一個建立房間（私享），另一個輸入房間碼加入，玩幾回合。這一步走的仍是 Firebase，只是兩個玩家在同一個網路。

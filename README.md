@@ -33,7 +33,7 @@
 
 ### 步驟 1：確認手上有可執行的 `Rich4Online.exe`【使用者】
 
-- 家用電腦上之前打包好的位置是 `<打包資料夾>\win-unpacked\Rich4Online.exe`（建置指南的範例資料夾是 `D:\rich4-release`；若當時填了別的位置，就去那裡找）。
+- 家用電腦上之前打包好的位置是 `<打包資料夾>\win-unpacked\Rich4Online.exe`（建置指南的範例資料夾是 `D:\Persional\Rich4\rich4-release`；若當時填了別的位置，就去那裡找）。
 - 找不到、或程式碼有更新需要重新打包：照 [`docs/online/HOME-SETUP.md`](docs/online/HOME-SETUP.md) 第 7 節打包（約 10–20 分鐘）。【AI】可以代為執行打包指令。
 - ⚠️ 這個 exe 與 `win-unpacked` 資料夾內含有版權的素材：**只在自己的電腦之間用隨身碟複製，不要上傳到雲端硬碟、GitHub 或任何網址。**
 
@@ -43,9 +43,9 @@
 
 1. 雙擊 `Rich4Online.exe`，這是**玩家 1**。
 2. 開 **PowerShell**（開始選單搜尋 PowerShell），貼上下面這行並按 Enter，開出**玩家 2**。
-   把 `D:\rich4-release` 換成步驟 1 實際的資料夾：
+   把 `D:\Persional\Rich4\rich4-release` 換成步驟 1 實際的資料夾：
    ```powershell
-   $env:RICH4_USER_DATA="$env:APPDATA\rich4-online-p2"; & 'D:\rich4-release\win-unpacked\Rich4Online.exe'
+   $env:RICH4_USER_DATA="$env:APPDATA\rich4-online-p2"; & 'D:\Persional\Rich4\rich4-release\win-unpacked\Rich4Online.exe'
    ```
    `RICH4_USER_DATA` 讓第二個視窗用另一個資料夾存資料，Firebase 才會把它當成另一個玩家。
    若出現「Windows 防火牆」詢問視窗，按「**取消**」即可（遊戲只往外連，不需要別人連進來）。
@@ -165,13 +165,13 @@ node scripts/bundle-assets.mjs                                              # 2.
 python scripts/recompress-dist.py dist                                      # 3. 重壓 dist 內的 WebP（q80，素材約 1.2 GB → 0.9 GB；不動原始素材）
 cd desktop
 $env:RICH4_DIST=(Resolve-Path ..\dist).Path
-$env:RICH4_DESKTOP_OUT='D:\rich4-release'                                   # 4. 輸出資料夾（放在 repo 外面）
+$env:RICH4_DESKTOP_OUT='D:\Persional\Rich4\rich4-release'                                   # 4. 輸出資料夾（放在 repo 外面）
 npx electron-builder --config electron-builder.config.cjs --win zip --x64
 ```
 
 整個過程約 10–20 分鐘。產出：
 
-- `D:\rich4-release\win-unpacked\Rich4Online.exe`：直接執行。
+- `D:\Persional\Rich4\rich4-release\win-unpacked\Rich4Online.exe`：直接執行。
 - 同資料夾的 zip：私下給朋友（約 1.2 GB）。
 
 注意：
@@ -179,7 +179,7 @@ npx electron-builder --config electron-builder.config.cjs --win zip --x64
 - 打包產物含有版權素材與 Firebase 設定，**只能私下傳給朋友，不要上傳到公開網址或提交進 Git**。
 - 第一次執行若出現「Windows 已保護你的電腦」，點「其他資訊 → 仍要執行」；防火牆詢問網路存取時按「取消」即可。
 - 程式碼有修改就要重新打包，連線雙方都要用同一版。
-- 同一台電腦要開兩個遊戲測試：`$env:RICH4_USER_DATA="$env:APPDATA\rich4-online-p2"; & 'D:\rich4-release\win-unpacked\Rich4Online.exe'`
+- 同一台電腦要開兩個遊戲測試：`$env:RICH4_USER_DATA="$env:APPDATA\rich4-online-p2"; & 'D:\Persional\Rich4\rich4-release\win-unpacked\Rich4Online.exe'`
 - 斷線或卡住時怎麼撈連線日誌：見下一節「斷線或卡住時：撈出連線日誌」。
 
 ### 斷線或卡住時：撈出連線日誌
