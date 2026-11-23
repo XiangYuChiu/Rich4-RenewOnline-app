@@ -154,6 +154,34 @@ AI 助手收到後要做：
    ```
 4. 驗證：`node scripts/firebase-smoke.mjs`（規則）、`FB_LIVE=1 npx vitest run src/ui/firebase-peer.live.test.ts`（傳輸層）。
 
+### 打包成 Windows exe
+
+前置條件：已完成上面 1–3 步（`game/public/assets/` 素材與 `game/.env.local` 都在）、已在 `game/` 與 `game/desktop/` 各跑過 `npm install`、Python 已安裝 Pillow（`pip install pillow`）。在 PowerShell 執行：
+
+```powershell
+cd game
+$env:RICH4_NO_ASSETS='1'; npx vite build; Remove-Item Env:RICH4_NO_ASSETS   # 1. 建置（不含素材）
+node scripts/bundle-assets.mjs                                              # 2. 把遊戲用到的素材複製進 dist（約 1.4 GB）
+python scripts/recompress-dist.py dist                                      # 3. 重壓 dist 內的 WebP（q80，素材約 1.2 GB → 0.9 GB；不動原始素材）
+cd desktop
+$env:RICH4_DIST=(Resolve-Path ..\dist).Path
+$env:RICH4_DESKTOP_OUT='D:\rich4-release'                                   # 4. 輸出資料夾（放在 repo 外面）
+npx electron-builder --config electron-builder.config.cjs --win zip --x64
+```
+
+整個過程約 10–20 分鐘。產出：
+
+- `D:\rich4-release\win-unpacked\Rich4Online.exe`：直接執行。
+- 同資料夾的 zip：私下給朋友（約 1.2 GB）。
+
+注意：
+
+- 打包產物含有版權素材與 Firebase 設定，**只能私下傳給朋友，不要上傳到公開網址或提交進 Git**。
+- 第一次執行若出現「Windows 已保護你的電腦」，點「其他資訊 → 仍要執行」；防火牆詢問網路存取時按「取消」即可。
+- 程式碼有修改就要重新打包，連線雙方都要用同一版。
+- 同一台電腦要開兩個遊戲測試：`$env:RICH4_USER_DATA="$env:APPDATA\rich4-online-p2"; & 'D:\rich4-release\win-unpacked\Rich4Online.exe'`
+- 取連線日誌：遊戲內按 F12，Console 輸入 `localStorage.getItem('rich4.party.log')`。
+
 本 Fork 的 App ID 是 `io.github.xiangyuchiu.rich4online`（名稱「大富翁4連線版」），可以和官方版同時安裝，存檔與資料互不干擾。
 
 ## 授權與素材
