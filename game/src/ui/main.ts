@@ -20,7 +20,7 @@ import { askScreens, closeStuckScreens, fxScreens } from './screens/registry';
 import { PartyBar } from './party-chat';
 import { openParty } from './party';
 import { RULE_ITEMS, RULE_LABELS } from './rule-options';
-import { Lobby, TURN_SECONDS, type Room } from './party-net';
+import { Lobby, netlog, TURN_SECONDS, type Room } from './party-net';
 import { AUTO_SLOT, TYCOON_AUTO_SLOT, interruptedLoad, loadSlot, markLoading, notice, pickSlot, writeAuto, writeSlot, type Loaded } from './saves';
 import { lowerTier } from './mem-tier';
 import { memReport } from './mem-report';
@@ -1222,8 +1222,15 @@ async function begin(mapId: number, make: (board: import('../core/board').Board)
       e.stopPropagation(); audio.ui('click');
       for (const seat of room.mine) if (game.players[seat]?.autopilot) cancelAuto.add(seat);
     };
+    const vis = () => netlog(`page ${document.hidden ? 'HIDDEN' : 'visible'} (link=${room.connected()})`);
+    document.addEventListener('visibilitychange', vis);
+    document.addEventListener('freeze', () => netlog('page FROZEN'));
+    document.addEventListener('resume', () => netlog('page resumed'));
+    let lastTick = Date.now();
     const tick = window.setInterval(() => {
-      if (me !== session) { clearInterval(tick); return; }
+      if (me !== session) { clearInterval(tick); document.removeEventListener('visibilitychange', vis); return; }
+      if (Date.now() - lastTick > 5000) netlog(`timers stalled ${Math.round((Date.now() - lastTick) / 1000)}s (hidden=${document.hidden})`);
+      lastTick = Date.now();
       const left = turnDeadline ? Math.ceil((turnDeadline - Date.now()) / 1000) : 99;
       clock.hidden = left > 10 || left < 0;
       clock.textContent = `還剩 ${left} 秒`;
@@ -1342,10 +1349,14 @@ async function begin(mapId: number, make: (board: import('../core/board').Board)
           const waitFrom = Date.now();
           let stuckSent = false;
           while (!got) {
-            if (!stuckSent && Date.now() - waitFrom > 45_000) { stuckSent = true; void reportParty('stuck', `等待 ${nameOf(s.p)} 操作已超過 45 秒（${s.t}）`, { seq, detail: `第 ${game.daysElapsed} 天・${room.connected() ? '和房主連線正常' : '和房主斷線中'}・${room.ownerConnected(s.p) ? '對方在線' : '對方斷線'}` }); }
+            if (!stuckSent && Date.now() - waitFrom > 45_000) { stuckSent = true; netlog(`${room.host ? 'host' : 'guest'}: seq ${seq} ${s.t} still waiting for ${nameOf(s.p)} after 45s (link=${room.connected()}, owner=${room.ownerConnected(s.p)})`); void reportParty('stuck', `等待 ${nameOf(s.p)} 操作已超過 45 秒（${s.t}）`, { seq, detail: `第 ${game.daysElapsed} 天・${room.connected() ? '和房主連線正常' : '和房主斷線中'}・${room.ownerConnected(s.p) ? '對方在線' : '對方斷線'}` }); }
             if (room.host) {
               if (room.ownerConnected(s.p)) dropped.delete(s.p); else if (!dropped.has(s.p)) dropped.set(s.p, Date.now());
-              if (room.kickedSeats.has(s.p) || Date.now() - (dropped.get(s.p) ?? Infinity) >= 10000) { answer = auto(); sendSeq = seq; break; }
+              if (room.kickedSeats.has(s.p) || Date.now() - (dropped.get(s.p) ?? Infinity) >= 10000) { netlog(`host: seq ${seq} ${s.t} ${nameOf(s.p)} answered by host (${room.kickedSeats.has(s.p) ? 'kicked' : 'dropped 10s'})`); answer = auto(); sendSeq = seq; break; }
+              // The clock only ran on that player's own phone: a frozen page (throttled timers, hung tab) is still
+              // "connected" yet never answers, and everyone waited forever. The host now keeps its own clock (room's
+              // 等待時間 + 8 s grace) and takes that one step for them, the same step their own clock would take.
+              if (Date.now() - waitFrom >= turnMs() + 8000) { netlog(`host: seq ${seq} ${s.t} ${nameOf(s.p)} timed out ${Math.round((Date.now() - waitFrom) / 1000)}s (connected=${room.ownerConnected(s.p)}), host answers`); answer = (s.t === 'auto-turn' ? 0 : autoAnswer(s)) as Answer; sendSeq = seq; break; }
             }
             waiting.textContent = room.kickedSeats.has(s.p) ? `${nameOf(s.p)} 由電腦接手…` : `等待 ${nameOf(s.p)} 操作…${seatPing(room, s.p)}`; waiting.hidden = false;
             // (untilHost only for a guest: it is already settled on the host, and racing it there spun forever)
@@ -1389,7 +1400,7 @@ async function begin(mapId: number, make: (board: import('../core/board').Board)
           answerTurn = resolve;
           toolbar.setTurnOpen(true);
           go.show(p.traffic & 3, keptDice?.key === key ? keptDice.dice : p.dice, s.maxDice, p.stay !== 0, p.turtle !== 0).then(dice => resolve({ dice }));
-        }), expires(s.p), () => { go.cancel(); void hud.flash(`${turnMs() / 1000} 秒沒有操作\n自動擲骰`, 1600); return autoAnswer(s); });
+        }), expires(s.p), () => { netlog(`own clock fired: turn, auto roll (hidden=${document.hidden})`); go.cancel(); void hud.flash(`${turnMs() / 1000} 秒沒有操作\n自動擲骰`, 1600); return autoAnswer(s); });
         answerTurn = null;
         // Another action first (card, tool, stocks…): keep the dice picked on GO for when the turn menu opens again.
         keptDice = answer && typeof answer === 'object' && 'dice' in answer ? null : { key, dice: go.picked() };
