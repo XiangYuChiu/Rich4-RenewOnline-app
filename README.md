@@ -180,7 +180,35 @@ npx electron-builder --config electron-builder.config.cjs --win zip --x64
 - 第一次執行若出現「Windows 已保護你的電腦」，點「其他資訊 → 仍要執行」；防火牆詢問網路存取時按「取消」即可。
 - 程式碼有修改就要重新打包，連線雙方都要用同一版。
 - 同一台電腦要開兩個遊戲測試：`$env:RICH4_USER_DATA="$env:APPDATA\rich4-online-p2"; & 'D:\rich4-release\win-unpacked\Rich4Online.exe'`
-- 取連線日誌：遊戲內按 F12，Console 輸入 `localStorage.getItem('rich4.party.log')`。
+- 斷線或卡住時怎麼撈連線日誌：見下一節「斷線或卡住時：撈出連線日誌」。
+
+### 斷線或卡住時：撈出連線日誌
+
+遊戲會把連線事件記在**每台電腦自己的**日誌裡（最近 200 行，存在該電腦的 localStorage，關閉遊戲後仍保留，不會自動清除）。出問題後，**房主與有問題的玩家兩邊都要各撈一份**，才能對照時間。
+
+1. **盡快撈，不要先重開遊戲再玩**（重新建房、加入房間都會繼續往後寫，舊紀錄 200 行後會被擠掉）。遊戲還開著就直接做第 2 步；已經關掉的話，重開 exe 後馬上做第 2 步，不用進房間，舊紀錄還在。
+2. 在遊戲視窗按 **F12**（再按一次關閉）打開 Console，貼上這行後按 Enter，整份日誌會複製到剪貼簿：
+   ```js
+   copy(JSON.parse(localStorage.getItem('rich4.party.log') ?? '[]').join('\n'))
+   ```
+   再貼到記事本存檔（或直接貼給 AI）。只想在畫面上看的話，改輸入 `JSON.parse(localStorage.getItem('rich4.party.log')).join('\n')`。
+3. 同時記下：問題發生的**大約時間**（對照日誌的時間戳，格式 `時:分:秒.毫秒`，是 UTC，台灣時間要加 8 小時）、誰是房主、卡在哪個畫面。
+4. 如果卡住的玩家畫面完全點不動、按 F12 也沒反應：等房主端代打讓遊戲繼續後，關掉該視窗，重開 exe 再做第 2 步。
+5. 用 `RICH4_USER_DATA` 開的第二個遊戲視窗，日誌是**分開存**的，要在那個視窗裡撈。
+
+日誌裡常見的訊息：
+
+| 訊息 | 代表 |
+|---|---|
+| `host: guest … dropped` | 房主判定某位玩家斷線（含沉默多久、連線是否還開著） |
+| `guest: lost host … rejoining`、`guest: rejoin try N ok/failed` | 玩家這端失去房主，正在自動重連與結果（**重連失敗的原因主要看這裡**） |
+| `host: seq … answered by host (kicked / dropped 10s)` | 房主因對方被踢出或斷線，替他做一步 |
+| `host: seq … timed out …s (connected=…), host answers` | 對方超過等待時間仍沒操作，房主代打；`connected=true` 表示連線沒斷但他那邊卡住 |
+| `… still waiting for … after 45s` | 等待某人操作超過 45 秒（附連線狀態） |
+| `own clock fired` | 這台電腦自己的倒數時間到，自動擲骰 |
+| `page HIDDEN` / `page FROZEN` / `timers stalled Ns` | 這台電腦的遊戲視窗被縮到背景、凍結，或計時器停擺了 N 秒（卡住的常見原因） |
+
+另外，Firebase Console 的 Realtime Database 底下可看到 `peers`（房間與玩家連線）是否還有資料，可輔助判斷。
 
 本 Fork 的 App ID 是 `io.github.xiangyuchiu.rich4online`（名稱「大富翁4連線版」），可以和官方版同時安裝，存檔與資料互不干擾。
 
